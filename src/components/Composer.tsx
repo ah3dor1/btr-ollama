@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import type { ImageAttachment } from '../types';
 import { cn, formatBytes } from '../lib/format';
-import { ArrowUpIcon, CloseIcon, PaperclipIcon, SparklesIcon, StopIcon } from './icons';
+import { ArrowUpIcon, CloseIcon, PaperclipIcon, StopIcon } from './icons';
 
 interface Props {
   value: string;
@@ -12,12 +12,9 @@ interface Props {
   enterToSend: boolean;
   images: ImageAttachment[];
   visionSupported: boolean;
-  thinking: boolean | null;
-  thinkingSupported: boolean;
   onChange: (value: string) => void;
   onAttach: (files: FileList) => void;
   onRemoveImage: (id: string) => void;
-  onThink: (value: boolean) => void;
   onSend: () => void;
   onStop: () => void;
 }
@@ -31,19 +28,15 @@ export function Composer({
   enterToSend,
   images,
   visionSupported,
-  thinking,
-  thinkingSupported,
   onChange,
   onAttach,
   onRemoveImage,
-  onThink,
   onSend,
   onStop,
 }: Props) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const canSend = (value.trim().length > 0 || images.length > 0) && !busy;
-  const thinkingOn = thinking !== false;
 
   useEffect(() => {
     const element = textareaRef.current;
@@ -101,60 +94,30 @@ export function Composer({
           </div>
         )}
 
-        {(visionSupported || thinkingSupported) && (
+        {visionSupported && (
           <div className="composer-tools">
-            {visionSupported && (
-              <>
-                <input
-                  ref={fileInputRef}
-                  className="composer-file-input"
-                  type="file"
-                  accept="image/png,image/jpeg,image/webp,image/gif"
-                  multiple
-                  onChange={(event) => {
-                    const files = event.target.files;
-                    if (files && files.length > 0) onAttach(files);
-                    event.target.value = '';
-                  }}
-                />
-                <button
-                  type="button"
-                  className="composer-tool"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={busy}
-                  title="Attach images (vision models)"
-                >
-                  <PaperclipIcon size={14} />
-                  <span>Attach</span>
-                </button>
-              </>
-            )}
-
-            {thinkingSupported && (
-              <button
-                type="button"
-                role="switch"
-                aria-checked={thinkingOn}
-                className={cn('composer-tool', 'thinking-toggle', thinkingOn && 'is-active')}
-                onClick={() => onThink(!thinkingOn)}
-                title={
-                  thinking === null
-                    ? 'Thinking is on by default (auto). Click to turn it off.'
-                    : thinkingOn
-                      ? 'Thinking is on. Click to turn it off.'
-                      : 'Thinking is off. Click to turn it on.'
-                }
-              >
-                <SparklesIcon size={14} />
-                <span>Thinking</span>
-                <span className="thinking-state">
-                  {thinking === null ? 'auto' : thinkingOn ? 'on' : 'off'}
-                </span>
-                <span className="switch" aria-hidden="true">
-                  <span />
-                </span>
-              </button>
-            )}
+            <input
+              ref={fileInputRef}
+              className="composer-file-input"
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/gif"
+              multiple
+              onChange={(event) => {
+                const files = event.target.files;
+                if (files && files.length > 0) onAttach(files);
+                event.target.value = '';
+              }}
+            />
+            <button
+              type="button"
+              className="composer-tool"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={busy}
+              title="Attach images (vision models)"
+            >
+              <PaperclipIcon size={14} />
+              <span>Attach</span>
+            </button>
           </div>
         )}
 

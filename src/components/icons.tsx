@@ -115,13 +115,6 @@ export const ExternalLinkIcon = (p: IconProps) => (
   </Icon>
 );
 
-export const SparklesIcon = (p: IconProps) => (
-  <Icon {...p}>
-    <path d="M12 3.5 13.9 9l5.6 1.9-5.6 1.9L12 18.5l-1.9-5.7L4.5 10.9 10.1 9 12 3.5Z" />
-    <path d="M18.5 3.5v3M17 5h3" />
-  </Icon>
-);
-
 export const CpuIcon = (p: IconProps) => (
   <Icon {...p}>
     <rect x="7" y="7" width="10" height="10" rx="2" />

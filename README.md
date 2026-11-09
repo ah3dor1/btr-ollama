@@ -38,7 +38,7 @@ Everything runs against the Ollama instance you choose. Prompts, conversations a
 - **A coding agent for real projects** — inspect, search, create and edit files, install packages, run tests, and commit, with per-action approval.
 - **Sampling controls** — temperature, `top_p`, `top_k`, `repeat_penalty`, seed, `num_ctx`, `num_predict`, stop sequences and tri-state thinking.
 - **Image attachments** — attach up to six PNG, JPEG, WebP or GIF images in chats with a vision-capable model; they are sent to Ollama as native image input and stay with the conversation.
-- **Thinking at the composer** — switch reasoning on or off for thinking-capable models without opening the inspector.
+- **Thinking control in Sampling** — switch reasoning between Auto, On and Off for thinking-capable models in the inspector's Sampling section.
 - **Two considered themes** — ink-violet dark and warm-paper light, plus a System option that follows the OS.
 - **Smooth by design** — streamed text is batched to animation frames, counters animate, and numeric displays use tabular figures so they do not jitter.
 
@@ -95,11 +95,11 @@ The inspector on the right holds the detail:
 | --- | --- |
 | System prompt | Editable prompt for this conversation, presets, token estimate |
 | Context | Tokens used vs `num_ctx`, measured or estimated, clear-context action |
-| Sampling | Every generation parameter, applied to the next request |
+| Sampling | Every generation parameter, including Thinking mode, applied to the next request |
 | Model | `/api/show` metadata: family, architecture, parameters, quantization, context, embedding size, disk size |
 | Usage | Prompt/completion totals, average decode speed, sparkline, last-request timings |
 
-Attach images with the paperclip button when the selected model reports the **vision** capability. Up to six PNG/JPEG/WebP/GIF files can ride with one turn, and the previews stay in the transcript. On models that report **thinking**, the composer's thinking switch turns reasoning on or off for the next request; the inspector still offers Auto, On and Off.
+Attach images with the paperclip button when the selected model reports the **vision** capability. Up to six PNG/JPEG/WebP/GIF files can ride with one turn, and the previews stay in the transcript. On models that report **thinking**, the **Sampling** section's **Thinking mode** control switches reasoning between Auto, On and Off for the next request.
 
 Conversation tools include search, rename, delete, Markdown export with metadata and per-message stats, and context clearing that keeps your system prompt. A preset library covers general assistant, senior engineer, code reviewer, technical writer, analyst, tutor and token-efficient prompts.
 

@@ -126,7 +126,6 @@ export default function App() {
   );
   const modelCapabilities = selectedModel?.capabilities ?? modelInfo?.capabilities ?? [];
   const visionSupported = modelCapabilities.includes('vision');
-  const thinkingSupported = modelCapabilities.includes('thinking');
 
   useEffect(() => {
     setDraftImages([]);
@@ -1559,12 +1558,9 @@ export default function App() {
               enterToSend={settings.enterToSend}
               images={draftImages}
               visionSupported={visionSupported}
-              thinking={activeConversation.think ?? null}
-              thinkingSupported={thinkingSupported}
               onChange={setDraft}
               onAttach={attachImages}
               onRemoveImage={removeDraftImage}
-              onThink={setThink}
               onSend={() => send()}
               onStop={stop}
             />
