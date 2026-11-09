@@ -10,7 +10,7 @@
   "scripts": {
     "dev": "concurrently -k \"vite\" \"wait-on tcp:5173 && cross-env BTR_DEV_URL=http://localhost:5173 electron .\"",
     "build": "tsc --noEmit && vite build",
-    "start": "electron .",
+    "start": "npm run build && electron .",
     "dist": "npm run build && electron-builder",
     "dist:linux": "npm run build && electron-builder --linux AppImage deb"
   },

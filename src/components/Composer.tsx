@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
-import { cn } from '../lib/format';
-import { ArrowUpIcon, StopIcon } from './icons';
+import type { ImageAttachment } from '../types';
+import { cn, formatBytes } from '../lib/format';
+import { ArrowUpIcon, CloseIcon, PaperclipIcon, SparklesIcon, StopIcon } from './icons';
 
 interface Props {
   value: string;
@@ -9,7 +10,14 @@ interface Props {
   streaming: boolean;
   busy: boolean;
   enterToSend: boolean;
+  images: ImageAttachment[];
+  visionSupported: boolean;
+  thinking: boolean | null;
+  thinkingSupported: boolean;
   onChange: (value: string) => void;
+  onAttach: (files: FileList) => void;
+  onRemoveImage: (id: string) => void;
+  onThink: (value: boolean) => void;
   onSend: () => void;
   onStop: () => void;
 }
@@ -21,12 +29,21 @@ export function Composer({
   streaming,
   busy,
   enterToSend,
+  images,
+  visionSupported,
+  thinking,
+  thinkingSupported,
   onChange,
+  onAttach,
+  onRemoveImage,
+  onThink,
   onSend,
   onStop,
 }: Props) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const canSend = value.trim().length > 0 && !busy;
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const canSend = (value.trim().length > 0 || images.length > 0) && !busy;
+  const thinkingOn = thinking !== false;
 
   useEffect(() => {
     const element = textareaRef.current;
@@ -59,6 +76,88 @@ export function Composer({
           aria-label="Message"
           spellCheck
         />
+
+        {images.length > 0 && (
+          <div className="composer-attachments" aria-label="Attached images">
+            {images.map((image) => (
+              <div className="composer-attachment" key={image.id}>
+                <img src={`data:${image.mime};base64,${image.data}`} alt="" />
+                <span
+                  className="composer-attachment-name"
+                  title={`${image.name} · ${formatBytes(image.size)}`}
+                >
+                  {image.name}
+                </span>
+                <button
+                  type="button"
+                  className="composer-attachment-remove"
+                  title={`Remove ${image.name}`}
+                  onClick={() => onRemoveImage(image.id)}
+                >
+                  <CloseIcon size={12} />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {(visionSupported || thinkingSupported) && (
+          <div className="composer-tools">
+            {visionSupported && (
+              <>
+                <input
+                  ref={fileInputRef}
+                  className="composer-file-input"
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp,image/gif"
+                  multiple
+                  onChange={(event) => {
+                    const files = event.target.files;
+                    if (files && files.length > 0) onAttach(files);
+                    event.target.value = '';
+                  }}
+                />
+                <button
+                  type="button"
+                  className="composer-tool"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={busy}
+                  title="Attach images (vision models)"
+                >
+                  <PaperclipIcon size={14} />
+                  <span>Attach</span>
+                </button>
+              </>
+            )}
+
+            {thinkingSupported && (
+              <button
+                type="button"
+                role="switch"
+                aria-checked={thinkingOn}
+                className={cn('composer-tool', 'thinking-toggle', thinkingOn && 'is-active')}
+                onClick={() => onThink(!thinkingOn)}
+                title={
+                  thinking === null
+                    ? 'Thinking is on by default (auto). Click to turn it off.'
+                    : thinkingOn
+                      ? 'Thinking is on. Click to turn it off.'
+                      : 'Thinking is off. Click to turn it on.'
+                }
+              >
+                <SparklesIcon size={14} />
+                <span>Thinking</span>
+                <span className="thinking-state">
+                  {thinking === null ? 'auto' : thinkingOn ? 'on' : 'off'}
+                </span>
+                <span className="switch" aria-hidden="true">
+                  <span />
+                </span>
+              </button>
+            )}
+          </div>
+        )}
+
         <div className="composer-bar">
           <div className="composer-meta">
             {busy && !streaming ? (
@@ -76,6 +175,14 @@ export function Composer({
                   <>
                     <span className="sep">·</span>
                     <span className="mono">≈ {estimate.toLocaleString()} tok</span>
+                  </>
+                )}
+                {images.length > 0 && (
+                  <>
+                    <span className="sep">·</span>
+                    <span>
+                      {images.length} image{images.length === 1 ? '' : 's'}
+                    </span>
                   </>
                 )}
               </>

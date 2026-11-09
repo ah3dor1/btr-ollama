@@ -9,6 +9,7 @@ import type {
   ChatEvent,
   ConnectionState,
   Conversation,
+  ImageAttachment,
   Message,
   MessageStats,
   OllamaModel,
@@ -28,6 +29,7 @@ import {
 } from './lib/defaults';
 import { clamp, cn, estimatePromptTokens, estimateTokens } from './lib/format';
 import { conversationToMarkdown, slugify } from './lib/export';
+import { readImageAttachments } from './lib/attachments';
 import {
   AGENT_BRIEF_INSTRUCTION,
   AGENT_BRIEF_TOOLS,
@@ -85,6 +87,7 @@ export default function App() {
   const [modelInfoNonce, setModelInfoNonce] = useState(0);
   const [streamMeta, setStreamMeta] = useState<{ conversationId: string; messageId: string } | null>(null);
   const [draft, setDraft] = useState('');
+  const [draftImages, setDraftImages] = useState<ImageAttachment[]>([]);
   const [showInspector, setShowInspector] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
   const [toasts, setToasts] = useState<ToastItem[]>([]);
@@ -117,6 +120,17 @@ export default function App() {
     () => models.filter((model) => model.capabilities?.includes('tools')),
     [models],
   );
+  const selectedModel = useMemo(
+    () => models.find((model) => model.name === activeConversation?.model),
+    [models, activeConversation?.model],
+  );
+  const modelCapabilities = selectedModel?.capabilities ?? modelInfo?.capabilities ?? [];
+  const visionSupported = modelCapabilities.includes('vision');
+  const thinkingSupported = modelCapabilities.includes('thinking');
+
+  useEffect(() => {
+    setDraftImages([]);
+  }, [activeConversation?.id]);
 
   const toast = useCallback((message: string, tone: ToastTone = 'info') => {
     const id = uid();
@@ -446,10 +460,13 @@ export default function App() {
         ...(conversation.systemPrompt.trim()
           ? [{ role: 'system', content: conversation.systemPrompt.trim() }]
           : []),
-        ...history.filter((message) => message.content.trim()).map((message) => ({
-          role: message.role,
-          content: message.content,
-        })),
+        ...history
+          .filter((message) => message.content.trim() || message.images?.length)
+          .map((message) => ({
+            role: message.role,
+            content: message.content,
+            ...(message.images?.length ? { images: message.images.map((image) => image.data) } : {}),
+          })),
       ];
 
       try {
@@ -485,8 +502,9 @@ export default function App() {
   const send = useCallback(
     (text?: string) => {
       const content = (text ?? draft).trim();
+      const images = draftImages;
       const conversation = activeRef.current;
-      if (!content || !conversation) return;
+      if ((!content && images.length === 0) || !conversation) return;
       if (streamRef.current) {
         toast('A response is already generating.', 'info');
         return;
@@ -499,19 +517,33 @@ export default function App() {
         toast('Ollama is offline — retry the connection first.', 'error');
         return;
       }
-      const userMessage: Message = { id: uid(), role: 'user', content, createdAt: Date.now() };
+      if (images.length > 0 && !visionSupported) {
+        toast('This model does not support image input.', 'error');
+        return;
+      }
+      const userMessage: Message = {
+        id: uid(),
+        role: 'user',
+        content,
+        ...(images.length > 0 ? { images } : {}),
+        createdAt: Date.now(),
+      };
       const history = [...conversation.messages, userMessage];
       const nextConversation: Conversation = {
         ...conversation,
-        title: conversation.messages.length === 0 ? titleFromText(content) : conversation.title,
+        title:
+          conversation.messages.length === 0
+            ? titleFromText(content || images[0]?.name || 'Image')
+            : conversation.title,
         messages: history,
         updatedAt: Date.now(),
       };
       setConversations((prev) => prev.map((item) => (item.id === nextConversation.id ? nextConversation : item)));
       setDraft('');
+      setDraftImages([]);
       void startCompletion(nextConversation, history);
     },
-    [draft, connection.state, startCompletion, toast],
+    [draft, draftImages, visionSupported, connection.state, startCompletion, toast],
   );
 
   const regenerate = useCallback(() => {
@@ -544,12 +576,14 @@ export default function App() {
     setConversations((prev) => [conversation, ...prev]);
     setActiveId(conversation.id);
     setDraft('');
+    setDraftImages([]);
   }, [models, settings, toast]);
 
   const selectConversation = useCallback((id: string) => {
     setMode('chat');
     setActiveId(id);
     setDraft('');
+    setDraftImages([]);
   }, []);
 
   const renameConversation = useCallback((id: string, title: string) => {
@@ -635,16 +669,40 @@ export default function App() {
     [patchActive],
   );
 
-  const changeModel = useCallback((name: string) => {
-    const conversation = activeRef.current;
-    if (!conversation) return;
-    setConversations((prev) =>
-      prev.map((item) =>
-        item.id === conversation.id ? { ...item, model: name, think: null, updatedAt: Date.now() } : item,
-      ),
-    );
-    setSettings((prev) => ({ ...prev, defaultModel: name }));
+  const attachImages = useCallback(
+    async (files: FileList) => {
+      if (!visionSupported) {
+        toast('This model does not support image input.', 'error');
+        return;
+      }
+      const { images, errors } = await readImageAttachments(files, draftImages.length);
+      if (images.length > 0) setDraftImages((prev) => [...prev, ...images]);
+      errors.forEach((error) => toast(error, 'error'));
+    },
+    [draftImages.length, visionSupported, toast],
+  );
+
+  const removeDraftImage = useCallback((id: string) => {
+    setDraftImages((prev) => prev.filter((image) => image.id !== id));
   }, []);
+
+  const changeModel = useCallback(
+    (name: string) => {
+      const conversation = activeRef.current;
+      if (!conversation) return;
+      if (draftImages.length > 0) {
+        setDraftImages([]);
+        toast('Draft images cleared for the new model.', 'info');
+      }
+      setConversations((prev) =>
+        prev.map((item) =>
+          item.id === conversation.id ? { ...item, model: name, think: null, updatedAt: Date.now() } : item,
+        ),
+      );
+      setSettings((prev) => ({ ...prev, defaultModel: name }));
+    },
+    [draftImages.length, toast],
+  );
 
   const requestClearContext = useCallback(() => {
     const conversation = activeRef.current;
@@ -1391,11 +1449,6 @@ export default function App() {
     [activeConversation?.messages],
   );
 
-  const selectedModel = useMemo(
-    () => models.find((model) => model.name === activeConversation?.model),
-    [models, activeConversation?.model],
-  );
-
   const streamingMessageId =
     streamMeta && activeConversation && streamMeta.conversationId === activeConversation.id
       ? streamMeta.messageId
@@ -1504,7 +1557,14 @@ export default function App() {
               streaming={streaming}
               busy={Boolean(streamMeta)}
               enterToSend={settings.enterToSend}
+              images={draftImages}
+              visionSupported={visionSupported}
+              thinking={activeConversation.think ?? null}
+              thinkingSupported={thinkingSupported}
               onChange={setDraft}
+              onAttach={attachImages}
+              onRemoveImage={removeDraftImage}
+              onThink={setThink}
               onSend={() => send()}
               onStop={stop}
             />

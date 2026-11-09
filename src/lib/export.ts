@@ -27,7 +27,10 @@ export function conversationToMarkdown(conversation: Conversation): string {
     if (message.thinking) {
       lines.push('<details>', '<summary>Reasoning</summary>', '', message.thinking, '', '</details>', '');
     }
-    lines.push(message.content || '_(empty)_', '');
+    lines.push(message.content || (message.images?.length ? '_(image message)_' : '_(empty)_'), '');
+    if (message.images?.length) {
+      lines.push(`*Attached images: ${message.images.map((image) => image.name).join(', ')}*`, '');
+    }
     if (message.stats) {
       lines.push(
         `> ${message.stats.promptTokens} prompt · ${message.stats.completionTokens} completion · ${message.stats.tokensPerSecond.toFixed(1)} tok/s · ${formatDuration(message.stats.totalDurationMs)}`,

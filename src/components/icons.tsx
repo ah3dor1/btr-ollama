@@ -257,6 +257,12 @@ export const FileTextIcon = (p: IconProps) => (
   </Icon>
 );
 
+export const PaperclipIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M20.5 11.5 12 20a5 5 0 0 1-7-7l8.5-8.5a3.5 3.5 0 0 1 5 5L10 18a2 2 0 0 1-3-3l8-8" />
+  </Icon>
+);
+
 export const TerminalIcon = (p: IconProps) => (
   <Icon {...p}>
     <rect x="3" y="4.5" width="18" height="15" rx="2.5" />

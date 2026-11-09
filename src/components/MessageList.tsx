@@ -57,7 +57,20 @@ function MessageRow({ message, isStreaming, showThinking, canRegenerate, onCopy,
     return (
       <article className="row row-user">
         <div className="user-bubble">
-          <div className="user-text">{message.content}</div>
+          {message.content ? <div className="user-text">{message.content}</div> : null}
+          {message.images?.length ? (
+            <div className="user-images">
+              {message.images.map((image) => (
+                <img
+                  key={image.id}
+                  src={`data:${image.mime};base64,${image.data}`}
+                  alt={image.name}
+                  title={image.name}
+                  loading="lazy"
+                />
+              ))}
+            </div>
+          ) : null}
           <button
             type="button"
             className="row-copy"

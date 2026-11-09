@@ -19,10 +19,20 @@ export interface MessageStats {
   evalDurationMs: number;
 }
 
+export interface ImageAttachment {
+  id: string;
+  name: string;
+  mime: string;
+  size: number;
+  /** Base64 image data without the data URL prefix. */
+  data: string;
+}
+
 export interface Message {
   id: string;
   role: Role;
   content: string;
+  images?: ImageAttachment[];
   thinking?: string;
   model?: string;
   createdAt: number;
@@ -266,7 +276,7 @@ export interface BtrBridge {
     requestId: string;
     baseUrl: string;
     model: string;
-    messages: Array<{ role: string; content: string }>;
+    messages: Array<{ role: string; content: string; images?: string[] }>;
     options: Params;
     keepAlive: string;
     think: boolean | null;

@@ -16,8 +16,7 @@ Everything runs against the Ollama instance you choose. Prompts, conversations a
 
 - [Highlights](#highlights)
 - [Requirements](#requirements)
-- [Install](#install)
-- [Run from source](#run-from-source)
+- [Quick start](#quick-start)
 - [First run](#first-run)
 - [Models: search and one-click install](#models-search-and-one-click-install)
 - [Chat that shows its work](#chat-that-shows-its-work)
@@ -25,7 +24,7 @@ Everything runs against the Ollama instance you choose. Prompts, conversations a
 - [Keyboard shortcuts](#keyboard-shortcuts)
 - [Data and privacy](#data-and-privacy)
 - [How it works](#how-it-works)
-- [Build a desktop installer](#build-a-desktop-installer)
+- [Optional: build a desktop app](#optional-build-a-desktop-app)
 - [Project layout](#project-layout)
 - [Contributing](#contributing)
 - [License](#license)
@@ -38,43 +37,31 @@ Everything runs against the Ollama instance you choose. Prompts, conversations a
 - **A context gauge you can trust** — measured prompt + completion tokens against `num_ctx`, labelled **measured** or **estimate** so you always know which numbers came from the server.
 - **A coding agent for real projects** — inspect, search, create and edit files, install packages, run tests, and commit, with per-action approval.
 - **Sampling controls** — temperature, `top_p`, `top_k`, `repeat_penalty`, seed, `num_ctx`, `num_predict`, stop sequences and tri-state thinking.
+- **Image attachments** — attach up to six PNG, JPEG, WebP or GIF images in chats with a vision-capable model; they are sent to Ollama as native image input and stay with the conversation.
+- **Thinking at the composer** — switch reasoning on or off for thinking-capable models without opening the inspector.
 - **Two considered themes** — ink-violet dark and warm-paper light, plus a System option that follows the OS.
 - **Smooth by design** — streamed text is batched to animation frames, counters animate, and numeric displays use tabular figures so they do not jitter.
 
 ## Requirements
 
 - [Ollama](https://ollama.com/download) running locally. The daemon usually starts with the app; otherwise run `ollama serve`.
-- Node.js 20+ **only to build from source**. The packaged app does not need Node.
+- Node.js 20+ to run from source.
 - Linux: [bubblewrap](https://github.com/containers/bubblewrap) is optional and automatically used for coding-agent commands when available.
 
-## Install
+## Quick start
 
-Grab the latest build from [Releases](../../releases).
-
-**Linux**
+No release or installer is required. Clone the repository and run it from source:
 
 ```bash
-chmod +x BTR-Ollama-1.0.0.AppImage
-./BTR-Ollama-1.0.0.AppImage
-```
-
-On systems without FUSE, run the AppImage with `--appimage-extract-and-run`, or install the `.deb` instead.
-
-**macOS and Windows**
-
-Build a `.dmg` or `.nsis` installer from source with `npm run dist` on that platform. Prebuilt installers are published on the Releases page when available.
-
-## Run from source
-
-```bash
+git clone https://github.com/ah3dor1/btr-ollama.git
+cd btr-ollama
 npm install
-npm run dev        # Vite + Electron with hot reload
+npm run dev
 ```
 
-Production-style launch against the built renderer:
+`npm run dev` starts Vite and Electron with hot reload. For a production-style launch, `npm start` builds the renderer and opens the app:
 
 ```bash
-npm run build
 npm start
 ```
 
@@ -111,6 +98,8 @@ The inspector on the right holds the detail:
 | Sampling | Every generation parameter, applied to the next request |
 | Model | `/api/show` metadata: family, architecture, parameters, quantization, context, embedding size, disk size |
 | Usage | Prompt/completion totals, average decode speed, sparkline, last-request timings |
+
+Attach images with the paperclip button when the selected model reports the **vision** capability. Up to six PNG/JPEG/WebP/GIF files can ride with one turn, and the previews stay in the transcript. On models that report **thinking**, the composer's thinking switch turns reasoning on or off for the next request; the inspector still offers Auto, On and Off.
 
 Conversation tools include search, rename, delete, Markdown export with metadata and per-message stats, and context clearing that keeps your system prompt. A preset library covers general assistant, senior engineer, code reviewer, technical writer, analyst, tutor and token-efficient prompts.
 
@@ -170,14 +159,16 @@ Prompts and project files are sent only to the Ollama base URL you configure. Th
 - `src/` is React + TypeScript. Streaming events accumulate in a ref and flush on `requestAnimationFrame`, keeping long responses smooth.
 - The coding agent uses Ollama's non-streaming tool-calling API. The renderer drives the tool loop and asks for approval or a clarification answer; the main process validates every path against the project root and executes a tool only after the renderer sends an approved call.
 
-## Build a desktop installer
+## Optional: build a desktop app
+
+Running from source needs no packaging step. If you want a double-clickable build:
 
 ```bash
 npm run dist:linux   # AppImage + .deb
 npm run dist         # current platform: dmg on macOS, NSIS on Windows
 ```
 
-Output goes to `release/`. On Linux the AppImage is a single executable file.
+Output goes to `release/`.
 
 ## Project layout
 
