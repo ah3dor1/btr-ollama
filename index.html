@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self' ws://localhost:5173 http://localhost:5173"
+    />
+    <title>BTR-Ollama</title>
+    <meta name="theme-color" content="#0b0810" />
+    <script>
+      // Paint the correct theme before React hydrates, using the mirror written by the app.
+      (function () {
+        var stored = 'dark';
+        try {
+          stored = localStorage.getItem('btr-theme') || 'dark';
+        } catch (error) {}
+        var resolved =
+          stored === 'system'
+            ? window.matchMedia('(prefers-color-scheme: light)').matches
+              ? 'light'
+              : 'dark'
+            : stored === 'light'
+              ? 'light'
+              : 'dark';
+        document.documentElement.dataset.theme = resolved;
+        document.documentElement.dataset.themeMode = stored;
+        document.documentElement.style.colorScheme = resolved;
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
